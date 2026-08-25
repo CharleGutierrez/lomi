@@ -3,17 +3,11 @@
 # 🧠 LOMI
 **Local Optimization & Model Improver**
 
-```text
-    __       ______   __       __  __ 
-   /  |     /      \ /  \     /  |/  |
-   $$ |    /$$$$$$  |$$  \   /$$ |$$ |
-   $$ |    $$ |  $$ |$$$  \ /$$$ |$$ |
-   $$ |    $$ |  $$ |$$$$  /$$$$ |$$ |
-   $$ |    $$ |  $$ |$$ $$ $$/$$ |$$ |
-   $$ |__  $$ \__$$ |$$ |$$$/ $$ |$$ |
-   $$    | $$    $$/ $$ | $/  $$ |$$ |
-   $$$$$$/  $$$$$$/  $$/      $$/ $$/ 
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.svg">
+  <img alt="LOMI Universal AGI Gateway Logo" src="assets/logo-dark.svg" width="100%">
+</picture>
 
 [![Rust](https://img.shields.io/badge/rust-v1.75+-blue.svg?logo=rust)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
