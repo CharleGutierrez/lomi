@@ -48,6 +48,10 @@ LOMI is a high-speed, zero-cost AI Gateway written entirely in Rust. It sits sil
 | ⚡ **Speculative Decoding** | Uses a tiny local 0.5B model to guess tokens ahead of the cloud provider, speeding up cloud code generation by **3.4x**. |
 | 📉 **Continuous RLHF** | Watches your Git commits. If you revert AI-generated code, it applies a DPO penalty instantly, training the AI to match your coding style. |
 | 🧬 **LOMI Genesis** | The final frontier. LOMI has R/W access to its own `src/main.rs`. It profiles its own bottlenecks, rewrites its own code, and hot-reloads the binary. |
+| ⚡ **Omni-Orchestrator** | Central AI control loop that actively monitors system telemetry and autonomously engages hardware-level optimizations based on AI workload spikes. |
+| 🛡️ **Deep Kernel Intel** | Real-time `mlock()` RAM-disks, autonomous AppArmor kernel policies, and `perf_events` L3 cache-miss telemetry dynamically scale AI resources. |
+| 🔥 **HPC God-Tier** | Hard Real-Time `SCHED_FIFO` priorities (1000Hz jitter-free tuning), 100-Gigabit DPDK user-space polling, and eBPF `uprobe` C++ memory hijacking. |
+| 💻 **Native Multi-OS** | Features a `slint` native Rust GUI, Windows Power Plan toggling, local Desktop Search RAG, and Linux `cgroups v2` throttling built-in. |
 
 ---
 
@@ -113,7 +117,19 @@ cargo run -- serve-proxy --port 8080
 Then, open your favorite AI IDE (like **Cursor** or **Pi Coding Agent**) and set your Custom Base URL to:
 👉 `http://127.0.0.1:8080/v1`
 
-### 2. Hosting a Distributed Swarm
+### 2. The Omni-Orchestrator
+To unlock LOMI's God-Tier hardware optimizations (eBPF, NUMA pinning, cgroups throttling), launch the central AI orchestrator:
+```bash
+cargo run -- orchestrate
+```
+
+### 3. Native Slint GUI
+To view the LOMI native desktop UI, launch the experimental flag:
+```bash
+cargo run -- experimental --feature gui
+```
+
+### 4. Hosting a Distributed Swarm
 Have an old laptop and a desktop? Combine their RAM to run a 70B model!
 ```bash
 # On your powerful Desktop (Host)
@@ -123,12 +139,12 @@ lomi swarm --mode host
 lomi swarm --mode join
 ```
 
-### 3. Viewing the Web Dashboard
+### 5. Viewing the Web Dashboard
 LOMI hosts a gorgeous, live metrics dashboard to monitor your token savings. 
 Simply open a web browser and go to:
 👉 `http://localhost:3000`
 
-### 4. Hardware Optimization Simulation
+### 6. Hardware Optimization Simulation
 Curious how LOMI adapts to different machines? Run the hardware test:
 ```bash
 lomi test-hardware
