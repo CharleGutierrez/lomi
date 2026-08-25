@@ -107,42 +107,44 @@ sudo systemctl enable --now lomi.service
 
 ---
 
-## 📚 Tutorials & Usage
+## 📖 Tutorials & Usage
+
+LOMI acts as a middleman between your local coding environment (like Cursor, Pi, LangChain, or AutoGPT) and cloud LLM providers. By intercepting requests, it minifies prompts, routes dynamically to the cheapest capable model, injects context via local RAG, and sandboxes AI execution.
 
 ### 1. Activating the Gateway
-To use LOMI, start the proxy server (or rely on the background daemon):
+To use LOMI, start the proxy server (or rely on the background daemon installed during setup):
 ```bash
 cargo run -- serve-proxy --port 8080
 ```
-Then, open your favorite AI IDE (like **Cursor** or **Pi Coding Agent**) and set your Custom Base URL to:
-👉 `http://127.0.0.1:8080/v1`
+Then, open your favorite AI IDE (like **Cursor** or **Pi Coding Agent**) and set your Custom API URL / Base URL to:
+🔌 `http://127.0.0.1:8080/v1`
 
-### 2. The Omni-Orchestrator
-To unlock LOMI's God-Tier hardware optimizations (eBPF, NUMA pinning, cgroups throttling), launch the central AI orchestrator:
+Now, whenever you prompt your IDE, the request routes through LOMI's **Waterfall Router** first, which downgrades simple requests (like "fix this typo") to fast/cheap models while reserving heavy models (Claude 3 Opus) for complex tasks.
+
+### 2. The Omni-Orchestrator (God-Tier Hardware Tuning)
+To unlock LOMI's Deep Kernel Intelligence (eBPF memory hijacking, Linux cgroups v2 throttling, Windows Power Plan toggling), launch the central AI orchestrator:
 ```bash
 cargo run -- orchestrate
 ```
+This central loop will actively monitor AI workload spikes and autonomous tune your CPU/Kernel for zero-latency execution.
 
-### 3. Native Slint GUI
-To view the LOMI native desktop UI, launch the experimental flag:
-```bash
-cargo run -- experimental --feature gui
-```
-
-### 4. Hosting a Distributed Swarm
-Have an old laptop and a desktop? Combine their RAM to run a 70B model!
+### 3. Pooling RAM with P2P Swarm Compute
+If you want to run a massive model locally but lack the RAM on a single machine, you can network your devices to pool system RAM over Wi-Fi:
 ```bash
 # On your powerful Desktop (Host)
 lomi swarm --mode host
 
-# On your old Laptop (Joiner)
+# On your secondary Laptop (Joiner)
 lomi swarm --mode join
 ```
 
-### 5. Viewing the Web Dashboard
-LOMI hosts a gorgeous, live metrics dashboard to monitor your token savings. 
-Simply open a web browser and go to:
-👉 `http://localhost:3000`
+### 4. Viewing Dashboards and UIs
+LOMI offers both a web dashboard and a native desktop GUI to visualize your token savings, live API routing, and system telemetry.
+- **Web Dashboard:** Open a browser to 🌐 `http://localhost:3000`
+- **Native GUI:** Run `cargo run -- experimental --feature gui` (built with Slint/Ratatui)
+
+### 5. Continuous RLHF (Personalized Training)
+LOMI integrates directly with your Git workflow. If you commit AI-generated code and later `git revert` it, LOMI automatically registers a Direct Preference Optimization (DPO) penalty. Over time, the local models fine-tune themselves to perfectly match your specific coding style and avoid mistakes you've rejected in the past.
 
 ### 6. Hardware Optimization Simulation
 Curious how LOMI adapts to different machines? Run the hardware test:
@@ -152,7 +154,7 @@ lomi test-hardware
 
 ---
 
-## 📊 Benchmarks
+## 📈 Benchmarks
 
 *Tests conducted on a standard 1,500-token coding prompt.*
 
