@@ -28,6 +28,13 @@ _What we're working toward now. Use `- [ ]` / `- [x]` checklists._
 - [ ] Wayland Layer-Shell Global Spotlight (Quake-style command palette)
 - [ ] System-Wide D-Bus & journalctl RAG (local system context for the LLM)
 
+**Deep Kernel Intelligence (Linux):**
+- [ ] `mlock()` & `tmpfs` RAM-Disk (Zero-Latency Model pinning)
+- [ ] Autonomous AppArmor / SELinux Policy Generation (AI-generated kernel security)
+- [ ] GPU MIG / VFIO Passthrough (Hardware-isolated GPU slicing for Firecracker)
+- [ ] `perf_event_open` CPU Cache-Miss Telemetry (Hardware-level performance counters)
+- [ ] WireGuard Netlink AI Swarm (Kernel-level encrypted peer-to-peer compute)
+
 ## Next
 _Queued, but not started._
 

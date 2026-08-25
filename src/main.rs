@@ -174,7 +174,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 "sandbox" => {
                     #[cfg(target_os = "linux")]
-                    let _ = crate::sys::linux::firecracker::spawn_firecracker_sandbox("/vmlinux", "/rootfs.ext4");
+                    {
+                        let _ = crate::sys::linux::firecracker::spawn_firecracker_sandbox("/vmlinux", "/rootfs.ext4");
+                        let _ = crate::sys::linux::vfio_gpu::attach_vfio_gpu("0000:01:00.0");
+                        let _ = crate::sys::linux::apparmor_ai::enforce_ai_generated_profile("untrusted_eval");
+                    }
+                }
+                "memory" => {
+                    #[cfg(target_os = "linux")]
+                    {
+                        let _ = crate::sys::linux::mlock_ramdisk::pin_model_to_ram("llama3-8b.safetensors");
+                        let _ = crate::sys::linux::perf_telemetry::start_perf_telemetry();
+                    }
+                }
+                "swarm" => {
+                    #[cfg(target_os = "linux")]
+                    let _ = crate::sys::linux::wireguard_swarm::join_wireguard_swarm("PUB_KEY_9A8B7C", "198.51.100.42:51820");
                 }
                 _ => println!("Unknown feature: {}", feature),
             }
