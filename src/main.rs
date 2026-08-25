@@ -30,6 +30,10 @@ pub struct DashboardMetrics {
     pub rlhf_penalties: u64,
     pub active_nodes: u64,
     pub files_indexed: u64,
+    pub route_local: u64,
+    pub route_claude: u64,
+    pub route_gemini: u64,
+    pub route_groq: u64,
 }
 
 pub static METRICS: Mutex<DashboardMetrics> = Mutex::new(DashboardMetrics {
@@ -38,6 +42,10 @@ pub static METRICS: Mutex<DashboardMetrics> = Mutex::new(DashboardMetrics {
     rlhf_penalties: 0,
     active_nodes: 3,
     files_indexed: 1402,
+    route_local: 0,
+    route_claude: 0,
+    route_gemini: 0,
+    route_groq: 0,
 });
 
 use std::sync::mpsc;
@@ -866,6 +874,13 @@ fn run_pi_proxy_server(port: u16) {
 
                 // 4. Universal Waterfall API Router
                 let (routing_log, cost_log, simulated_provider) = universal_model_router(&mut chat_request, &compressed_req);
+                {
+                    let mut m = crate::METRICS.lock().unwrap();
+                    if simulated_provider.contains("Local") { m.route_local += 1; }
+                    else if simulated_provider.contains("Claude") { m.route_claude += 1; }
+                    else if simulated_provider.contains("Gemini") { m.route_gemini += 1; }
+                    else if simulated_provider.contains("Groq") { m.route_groq += 1; }
+                }
                 println!("   🌊 WATERFALL ROUTER: Dynamically redirecting model...");
                 println!("      {}", routing_log);
                 println!("      {}", cost_log);
@@ -1257,7 +1272,7 @@ fn run_web_dashboard(port: u16) {
             data: {
                 labels: ['Local Compute', 'Claude 3.5 Sonnet', 'Gemini Flash', 'Groq (Llama-3)'],
                 datasets: [{
-                    data: [45, 25, 20, 10],
+                    data: [0, 0, 0, 0],
                     backgroundColor: ['#4ade80', '#c084fc', '#facc15', '#f87171'],
                     borderWidth: 0
                 }]
@@ -1294,6 +1309,14 @@ fn run_web_dashboard(port: u16) {
                 data.shift();
                 data.push(throughput);
                 throughputChart.update();
+                
+                // Update Doughnut Chart (Routing Distribution)
+                const routeData = [m.route_local, m.route_claude, m.route_gemini, m.route_groq];
+                // Only update if there's actual data to avoid flatlining the empty chart
+                if (routeData.some(v => v > 0)) {
+                    routingChart.data.datasets[0].data = routeData;
+                    routingChart.update();
+                }
 
                 // Add log entry dynamically if there was traffic
                 if (throughput > 0) {
@@ -1330,8 +1353,9 @@ fn run_web_dashboard(port: u16) {
             if request.starts_with("GET /api/metrics") {
                 let m = METRICS.lock().unwrap();
                 let json = format!(
-                    r#"{{"total_tokens_saved": {}, "total_cost_saved": {:.5}, "rlhf_penalties": {}, "active_nodes": {}, "files_indexed": {}}}"#,
-                    m.total_tokens_saved, m.total_cost_saved, m.rlhf_penalties, m.active_nodes, m.files_indexed
+                    r#"{{"total_tokens_saved": {}, "total_cost_saved": {:.5}, "rlhf_penalties": {}, "active_nodes": {}, "files_indexed": {}, "route_local": {}, "route_claude": {}, "route_gemini": {}, "route_groq": {}}}"#,
+                    m.total_tokens_saved, m.total_cost_saved, m.rlhf_penalties, m.active_nodes, m.files_indexed,
+                    m.route_local, m.route_claude, m.route_gemini, m.route_groq
                 );
                 let response = format!(
                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: {}\r\n\r\n{}",
