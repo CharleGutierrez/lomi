@@ -1193,9 +1193,12 @@ fn run_web_dashboard(port: u16) {
 <body class="p-8">
     <div class="max-w-6xl mx-auto">
         <header class="mb-8 flex justify-between items-end border-b border-[#38bdf8] pb-4">
-            <div>
-                <h1 class="text-4xl font-bold neon-text">🧠 LOMI AGI Operating System</h1>
+            <div class="flex items-center gap-6">
+                <img src="https://raw.githubusercontent.com/CharleGutierrez/lomi/master/assets/logo-dark.svg" alt="LOMI Logo" class="h-20 drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]">
+                <div>
+                    <h1 class="text-4xl font-bold neon-text">LOMI AGI Operating System</h1>
                 <span class="text-yellow-400 text-sm mt-2 block">⚡ TRUE SILICON INTEGRATION: Candle ML Backend Active</span>
+                </div>
             </div>
             <div class="text-right">
                 <span class="status-green font-bold text-xl block">● ONLINE</span>
