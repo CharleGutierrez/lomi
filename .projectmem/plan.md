@@ -35,6 +35,13 @@ _What we're working toward now. Use `- [ ]` / `- [x]` checklists._
 - [ ] `perf_event_open` CPU Cache-Miss Telemetry (Hardware-level performance counters)
 - [ ] WireGuard Netlink AI Swarm (Kernel-level encrypted peer-to-peer compute)
 
+**God-Tier HPC (Linux):**
+- [ ] eBPF `uprobe` Memory Hijacking (Direct C++ heap token extraction)
+- [ ] DPDK Polling (100-Gigabit kernel bypass line-rate proxy)
+- [ ] NUMA-Aware CPU & Memory Pinning (Multi-socket PCIe bridge optimization)
+- [ ] `SCHED_FIFO` Hard Real-Time (PREEMPT_RT 1000Hz jitter-free execution)
+- [ ] WebAssembly (Wasm) Edge UDFs (Hot-loaded Wasmtime proxy middleware)
+
 ## Next
 _Queued, but not started._
 

@@ -191,6 +191,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     #[cfg(target_os = "linux")]
                     let _ = crate::sys::linux::wireguard_swarm::join_wireguard_swarm("PUB_KEY_9A8B7C", "198.51.100.42:51820");
                 }
+                "hpc" => {
+                    #[cfg(target_os = "linux")]
+                    {
+                        let _ = crate::sys::linux::hpc::uprobe_hijack::attach_uprobe_to_llm(4242);
+                        let _ = crate::sys::linux::hpc::dpdk_polling::init_dpdk_mode("0000:02:00.0");
+                        let _ = crate::sys::linux::hpc::numa_pinning::enforce_numa_topology(0);
+                        let _ = crate::sys::linux::hpc::sched_rt::elevate_to_rtos();
+                        let _ = crate::sys::linux::hpc::wasm_udf::load_wasm_middleware("custom_filter.wasm");
+                    }
+                }
                 _ => println!("Unknown feature: {}", feature),
             }
         }
