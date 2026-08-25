@@ -1,5 +1,6 @@
 pub mod sys;
 pub mod ui;
+pub mod core;
 
 use clap::{Parser, Subcommand};
 use crossterm::{
@@ -80,10 +81,12 @@ enum Commands {
     InstallDaemon,
     /// Launch experimental Lomi OS-native features
     Experimental {
-        /// Which experimental subsystem to test (e.g., 'gui', 'ebpf', 'rag', 'power', 'sandbox')
+        /// Which experimental subsystem to test (e.g., 'gui', 'ebpf', 'rag', 'power', 'sandbox', 'hpc')
         #[arg(short, long)]
         feature: String,
     },
+    /// Run the Master AI Omni-Orchestrator
+    Orchestrate,
 }
 
 #[derive(Deserialize, Debug)]
@@ -149,6 +152,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match &cli.command {
+        Commands::Orchestrate => {
+            crate::core::omni_orchestrator::run_orchestrator();
+        }
         Commands::Experimental { feature } => {
             println!("--- LOMI OS-NATIVE EXPERIMENTAL LAB ---");
             match feature.as_str() {

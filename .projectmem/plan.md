@@ -42,6 +42,9 @@ _What we're working toward now. Use `- [ ]` / `- [x]` checklists._
 - [ ] `SCHED_FIFO` Hard Real-Time (PREEMPT_RT 1000Hz jitter-free execution)
 - [ ] WebAssembly (Wasm) Edge UDFs (Hot-loaded Wasmtime proxy middleware)
 
+**Omni-Orchestrator Integration:**
+- [ ] Central AI Orchestrator (`omni_orchestrator.rs`) that intelligently triggers eBPF, DPDK, cgroups, and RTOS based on real-time payload analysis.
+
 ## Next
 _Queued, but not started._
 
