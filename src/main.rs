@@ -1,3 +1,6 @@
+pub mod sys;
+pub mod ui;
+
 use clap::{Parser, Subcommand};
 use crossterm::{
     event::{self, Event as CEvent, KeyCode},
@@ -75,6 +78,12 @@ enum Commands {
     Genesis,
     /// Install LOMI as a background OS Daemon (systemd)
     InstallDaemon,
+    /// Launch experimental Lomi OS-native features
+    Experimental {
+        /// Which experimental subsystem to test (e.g., 'gui', 'ebpf', 'rag', 'power', 'sandbox')
+        #[arg(short, long)]
+        feature: String,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -140,6 +149,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match &cli.command {
+        Commands::Experimental { feature } => {
+            println!("--- LOMI OS-NATIVE EXPERIMENTAL LAB ---");
+            match feature.as_str() {
+                "gui" => {
+                    let _ = crate::ui::gui::tauri_app::launch_tauri_app();
+                    let _ = crate::ui::gui::slint_app::launch_slint_app();
+                }
+                "ebpf" => {
+                    #[cfg(target_os = "windows")]
+                    let _ = crate::sys::windows::ebpf_win::init_ebpf_windows();
+                    #[cfg(target_os = "linux")]
+                    let _ = crate::sys::linux::ebpf::init_xdp_proxy("eth0");
+                }
+                "rag" => {
+                    #[cfg(target_os = "windows")]
+                    let _ = crate::sys::windows::desktop_rag::search_local_desktop("AI");
+                    #[cfg(target_os = "linux")]
+                    let _ = crate::sys::linux::dbus_rag::query_system_logs("lomi");
+                }
+                "power" => {
+                    #[cfg(target_os = "windows")]
+                    let _ = crate::sys::windows::power_plan::set_ultimate_performance_mode(true);
+                }
+                "sandbox" => {
+                    #[cfg(target_os = "linux")]
+                    let _ = crate::sys::linux::firecracker::spawn_firecracker_sandbox("/vmlinux", "/rootfs.ext4");
+                }
+                _ => println!("Unknown feature: {}", feature),
+            }
+        }
         Commands::InstallDaemon => {
             install_daemon();
         }

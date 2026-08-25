@@ -13,3 +13,15 @@ chrono = "0.4"
 ratatui = "0.26"
 crossterm = "0.27"
 rand = "0.8.5"
+
+# --- Heavy-Duty OS & GUI Components ---
+tokio = { version = "1.37", features = ["full"] }
+slint = "1.5"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+io-uring = "0.6"
+aya = "0.12"
+aya-log = "0.2"
+
+[build-dependencies]
+slint-build = "1.5"
