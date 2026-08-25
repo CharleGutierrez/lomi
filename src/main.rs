@@ -844,13 +844,18 @@ fn token_squeezer(input: &str) -> String {
 /// Universal Waterfall Router: Redirects API requests across all known AI endpoints
 fn universal_model_router(request: &mut UniversalChatRequest, prompt_text: &str) -> (String, String, String) {
     let original_model = request.model.clone();
+    let prompt_lower = prompt_text.to_lowercase();
     
-    let is_tool = prompt_text.contains("\"bash\"") || prompt_text.contains("\"read\"") || prompt_text.contains("tool");
-    let is_massive_context = prompt_text.len() > 20_000 || original_model.contains("1.5-pro") || original_model.contains("gemini");
-    let is_complex_code = prompt_text.contains("architecture") || prompt_text.len() > 1000;
+    // Heuristic Analysis
+    let is_tool = prompt_lower.contains("\"bash\"") || prompt_lower.contains("\"read\"") || prompt_lower.contains("tool");
+    let is_massive_context = prompt_text.len() > 50_000 || original_model.contains("1.5");
+    let is_complex_code = prompt_lower.contains("architecture") || prompt_lower.contains("system design") || prompt_text.len() > 2000;
+    let requires_ultimate_reasoning = prompt_lower.contains("mission critical") || prompt_lower.contains("complex algorithm");
+    let is_formatting_or_simple = prompt_lower.contains("format") || prompt_lower.contains("summarize") || prompt_lower.contains("explain");
 
+    // Dynamic Full-Spectrum Routing
     if is_tool {
-        // Reroute trivial tool calls to local Ollama (Llama/Qwen)
+        // Trivial Tasks -> Free Local Compute
         request.model = "ollama/qwen2.5-coder-7b".to_string();
         (
             format!("Routed {} ➡️ LOCAL API ({})", original_model, request.model),
@@ -858,27 +863,52 @@ fn universal_model_router(request: &mut UniversalChatRequest, prompt_text: &str)
             "Ollama (Local)".to_string()
         )
     } else if is_massive_context {
-        // Reroute massive context windows to Google Gemini 1.5 Pro
-        request.model = "gemini-1.5-pro-latest".to_string();
+        // Massive Contexts -> Google Gemini Lineup
+        if is_complex_code {
+            request.model = "gemini-1.5-pro-latest".to_string();
+            (
+                format!("Routed {} ➡️ GOOGLE API ({})", original_model, request.model),
+                "Cost: $1.25 / 1M Tokens (Massive Context + High Reasoning)".to_string(),
+                "Google Gemini Pro".to_string()
+            )
+        } else {
+            request.model = "gemini-1.5-flash-latest".to_string();
+            (
+                format!("Routed {} ➡️ GOOGLE API ({})", original_model, request.model),
+                "Cost: $0.07 / 1M Tokens (Massive Context + Fast)".to_string(),
+                "Google Gemini Flash".to_string()
+            )
+        }
+    } else if requires_ultimate_reasoning {
+        // Extreme Reasoning -> Claude 3 Opus
+        request.model = "claude-3-opus-20240229".to_string();
         (
-            format!("Routed {} ➡️ GOOGLE API ({})", original_model, request.model),
-            "Cost: $1.25 / 1M Tokens (Massive Context)".to_string(),
-            "Google Gemini API".to_string()
+            format!("Routed {} ➡️ ANTHROPIC API ({})", original_model, request.model),
+            "Cost: $15.00 / 1M Tokens (Maximum Intelligence)".to_string(),
+            "Anthropic Claude Opus".to_string()
         )
     } else if is_complex_code {
-        // Reroute heavy logic and precision coding to Anthropic Claude 3.5 Sonnet
+        // Standard Architecture/Coding -> Claude 3.5 Sonnet
         request.model = "claude-3-5-sonnet-20240620".to_string();
         (
             format!("Routed {} ➡️ ANTHROPIC API ({})", original_model, request.model),
-            "Cost: $3.00 / 1M Tokens (High Intelligence)".to_string(),
-            "Anthropic Claude API".to_string()
+            "Cost: $3.00 / 1M Tokens (Flagship Coding)".to_string(),
+            "Anthropic Claude Sonnet".to_string()
+        )
+    } else if is_formatting_or_simple {
+        // Simple/Fast Tasks -> Claude 3 Haiku
+        request.model = "claude-3-haiku-20240307".to_string();
+        (
+            format!("Routed {} ➡️ ANTHROPIC API ({})", original_model, request.model),
+            "Cost: $0.25 / 1M Tokens (Fast & Cheap)".to_string(),
+            "Anthropic Claude Haiku".to_string()
         )
     } else {
-        // Reroute standard requests to Ultra-fast LPU endpoints (Groq)
+        // Sub-second Latency -> Groq LPU
         request.model = "llama-3.1-8b-instant".to_string();
         (
             format!("Routed {} ➡️ FAST LPU API ({})", original_model, request.model),
-            "Cost: $0.05 / 1M Tokens".to_string(),
+            "Cost: $0.05 / 1M Tokens (Sub-second Latency)".to_string(),
             "Groq API".to_string()
         )
     }

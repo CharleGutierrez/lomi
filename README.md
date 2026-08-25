@@ -39,7 +39,7 @@ LOMI is a high-speed, zero-cost AI Gateway written entirely in Rust. It sits sil
 
 | Feature | Description |
 | :--- | :--- |
-| 🌊 **Waterfall Router** | Dynamically downgrades simple API requests to Free/Cheap models (Local or Groq Llama-3) while reserving **Claude 3.5 Sonnet** for heavy architecture and **Gemini 1.5 Pro** for massive context windows. |
+| 🌊 **Waterfall Router** | Dynamically downgrades simple API requests to Free/Cheap models (Local, Haiku, Flash, Groq) while reserving **Claude 3 Opus/Sonnet** for heavy architecture and **Gemini 1.5 Pro** for massive context windows. |
 | 🛡️ **Firecracker Vault** | Sandboxes all AI-generated `bash` commands inside a 40ms MicroVM. 100% immunity to hallucinations deleting your files. |
 | 🧠 **Infinite Memory (RAG)** | Automatically chunks and indexes your codebase into a Vector DB. Silently injects relevant files into AI prompts on the fly. |
 | 🏛️ **Multi-Agent Boardroom** | Intercepts massive monolithic prompts and dynamically splits them across a swarm of local Sub-Agents (Architect, Dev, QA) to solve locally. |
@@ -67,11 +67,14 @@ graph TD
         AST --> Decision{Heuristic Router}
         Decision -->|Untrusted Tool/Bash| Vault[Firecracker MicroVM Vault]
         Decision -->|Massive Prompt| Boardroom[Multi-Agent Boardroom]
-        Decision -->|Standard Prompt| Waterfall[Waterfall Router]
+        Decision -->|Standard Prompt| Waterfall[Full-Spectrum Waterfall Router]
         
-        Waterfall -->|Simple Formatting| Groq[Groq Llama-3 8B]
-        Waterfall -->|Heavy Architecture| Claude[Anthropic Claude 3.5]
-        Waterfall -->|Massive Context| Gemini[Google Gemini 1.5 Pro]
+        Waterfall -->|Extreme Logic| Opus[Claude 3 Opus]
+        Waterfall -->|Architecture| Sonnet[Claude 3.5 Sonnet]
+        Waterfall -->|Massive Context| GeminiPro[Gemini 1.5 Pro]
+        Waterfall -->|Large Fast Context| GeminiFlash[Gemini 1.5 Flash]
+        Waterfall -->|Fast Formatting| Haiku[Claude 3 Haiku]
+        Waterfall -->|Sub-second Latency| Groq[Groq Llama-3 8B]
         Waterfall -->|Local Tools| Local[Ollama / Qwen Coder]
         
         RLHF[Continuous RLHF] -.->|Preference Updates| Local
