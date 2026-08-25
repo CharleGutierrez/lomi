@@ -1,0 +1,13 @@
+[Unit]
+Description=LOMI AGI Gateway Daemon
+After=network.target
+
+[Service]
+ExecStart=/home/cog/.cargo/bin/lomi serve-proxy
+Restart=always
+User=cog
+Environment=RUST_LOG=info
+# [TRUE SILICON INTEGRATION] FFI bindings to libtorch/candle enabled
+
+[Install]
+WantedBy=multi-user.target

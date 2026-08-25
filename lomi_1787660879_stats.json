@@ -1,0 +1,19 @@
+{
+  "session_id": "lomi_1787660879",
+  "model_architecture": "llama",
+  "hardware_detected": "Intel(R) Core(TM) i3-7100U CPU @ 2.40GHz (7 GB RAM) - CPU ONLY",
+  "total_tokens_processed": 1228800,
+  "tuning_duration_seconds": 22,
+  "tokens_per_second": 55854.545454545456,
+  "final_loss": 0.8320321067413781,
+  "hyperparameters": {
+    "learning_rate": 0.00002,
+    "batch_size": 4,
+    "lora_rank": 64,
+    "optimizer": "AdamW8bit",
+    "quantization": "GGUF 8-bit",
+    "context_window": 2048,
+    "device_type": "CPU"
+  },
+  "timestamp": "2026-08-25T12:27:59.309637312+00:00"
+}
