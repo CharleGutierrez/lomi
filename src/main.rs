@@ -1128,7 +1128,7 @@ fn run_web_dashboard(port: u16) {
     <meta charset="UTF-8">
     <title>LOMI AGI Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     <style>
         body { background: #0f172a; color: #38bdf8; font-family: 'Courier New', monospace; }
         .neon-border { border: 1px solid #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
@@ -1290,11 +1290,7 @@ fn run_web_dashboard(port: u16) {
     for stream in listener.incoming() {
         if let Ok(mut stream) = stream {
             let response = format!(
-                "HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-Content-Length: {}
-
-{}",
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\nContent-Length: {}\r\n\r\n{}", 
                 html.len(),
                 html
             );
