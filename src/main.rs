@@ -26,6 +26,7 @@ use std::sync::Mutex;
 
 pub struct DashboardMetrics {
     pub total_tokens_saved: u64,
+    pub total_tokens_processed: u64,
     pub total_cost_saved: f64,
     pub rlhf_penalties: u64,
     pub active_nodes: u64,
@@ -38,6 +39,7 @@ pub struct DashboardMetrics {
 
 pub static METRICS: Mutex<DashboardMetrics> = Mutex::new(DashboardMetrics {
     total_tokens_saved: 0,
+    total_tokens_processed: 0,
     total_cost_saved: 0.0,
     rlhf_penalties: 0,
     active_nodes: 3,
@@ -905,13 +907,23 @@ fn run_pi_proxy_server(port: u16) {
                 }
 
                 // Generate Standard OpenAI Format Response
+                let prompt_tokens = original_len / 4;
+                let completion_tokens = mock_content.len() / 4;
+                let total_processed = prompt_tokens + completion_tokens;
+                
+                {
+                    let mut m = crate::METRICS.lock().unwrap();
+                    m.total_tokens_processed += total_processed as u64;
+                }
+
                 let response_body = format!(
-                    r#"{{"id": "chatcmpl-lomi", "object": "chat.completion", "created": {}, "model": "{}", "choices": [{{"index": 0, "message": {{"role": "assistant", "content": "{}"}}, "finish_reason": "stop"}}], "usage": {{"prompt_tokens": {}, "completion_tokens": 15, "total_tokens": {}}}}}"#,
+                    r#"{{"id": "chatcmpl-lomi", "object": "chat.completion", "created": {}, "model": "{}", "choices": [{{"index": 0, "message": {{"role": "assistant", "content": "{}"}}, "finish_reason": "stop"}}], "usage": {{"prompt_tokens": {}, "completion_tokens": {}, "total_tokens": {}}}}}"#,
                     chrono::Utc::now().timestamp(),
                     chat_request.model,
                     mock_content,
-                    original_len / 4,
-                    (original_len / 4) + 15
+                    prompt_tokens,
+                    completion_tokens,
+                    total_processed
                 );
                 
                 let response = format!(
@@ -1297,12 +1309,12 @@ fn run_web_dashboard(port: u16) {
                 document.getElementById('tokensSaved').innerText = m.total_tokens_saved.toLocaleString();
                 document.getElementById('costSaved').innerText = '$' + m.total_cost_saved.toFixed(5);
                 
-                // Calculate throughput (Tokens this second)
+                // Calculate throughput (Processed tokens this second)
                 let throughput = 0;
                 if (lastTokens !== null) {
-                    throughput = Math.max(0, m.total_tokens_saved - lastTokens);
+                    throughput = Math.max(0, m.total_tokens_processed - lastTokens);
                 }
-                lastTokens = m.total_tokens_saved;
+                lastTokens = m.total_tokens_processed;
                 
                 // Update Line Chart
                 const data = throughputChart.data.datasets[0].data;
@@ -1353,8 +1365,8 @@ fn run_web_dashboard(port: u16) {
             if request.starts_with("GET /api/metrics") {
                 let m = METRICS.lock().unwrap();
                 let json = format!(
-                    r#"{{"total_tokens_saved": {}, "total_cost_saved": {:.5}, "rlhf_penalties": {}, "active_nodes": {}, "files_indexed": {}, "route_local": {}, "route_claude": {}, "route_gemini": {}, "route_groq": {}}}"#,
-                    m.total_tokens_saved, m.total_cost_saved, m.rlhf_penalties, m.active_nodes, m.files_indexed,
+                    r#"{{"total_tokens_saved": {}, "total_tokens_processed": {}, "total_cost_saved": {:.5}, "rlhf_penalties": {}, "active_nodes": {}, "files_indexed": {}, "route_local": {}, "route_claude": {}, "route_gemini": {}, "route_groq": {}}}"#,
+                    m.total_tokens_saved, m.total_tokens_processed, m.total_cost_saved, m.rlhf_penalties, m.active_nodes, m.files_indexed,
                     m.route_local, m.route_claude, m.route_gemini, m.route_groq
                 );
                 let response = format!(
