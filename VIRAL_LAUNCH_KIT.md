@@ -1,29 +1,93 @@
-# 🚀 LOMI Launch Kit
+# 🚀 LOMI Viral Launch Kit
 
-Everything is set up! Just copy and paste these into the respective platforms to launch LOMI.
+Copy and paste these exact posts to your social media channels to drive massive developer traffic to your GitHub repository. The copy is optimized for the algorithms of each specific platform.
 
-### 1. Hacker News (news.ycombinator.com)
-**Title:** Show HN: I built a Rust AI Gateway that cuts Claude/OpenAI costs by 40%
+---
+
+## 1. Hacker News (news.ycombinator.com)
+**Title:** Show HN: I built a pure-Rust AI Gateway that tunes the Linux Kernel & cuts API costs
+
 **Body:**
 Hey HN,
-I was spending too much money on API tokens using Cursor and LangChain for simple tasks (like bash commands or basic formatting). So I wrote a blazing-fast universal proxy in Rust called LOMI. 
-You set your base URL to localhost:8080, and it intercepts your prompts. It minifies the AST to save tokens, sandboxes tool calls in a Firecracker MicroVM, and automatically downgrades trivial tasks to Groq/Llama-3 while reserving Claude 3.5 Sonnet for heavy architecture. 
 
-It also networks old laptops together over Wi-Fi to pool RAM for 70B models. 
-Would love your feedback! Repo: https://github.com/CharleGutierrez/lomi
+I was frustrated by AI coding agents (like Cursor or AutoGPT) leaking API keys, draining my OpenAI credits in infinite loops, and relying on slow cloud VMs for sandboxing. So I built LOMI.
 
-### 2. Reddit (r/LocalLLaMA)
-**Title:** Drop-in Rust Proxy that networks your laptops into a 70B Swarm + Reroutes APIs to save money. 
+LOMI is a zero-dependency, pure-Rust Universal AI Gateway that sits on `localhost:8080`. 
+Instead of just routing API keys, it acts as an OS-level infrastructure middleware:
+* **The Vault:** It intercepts AI-generated `bash` scripts in your prompt and safely executes them offline using Linux Namespaces (`unshare --net --pid`), feeding the output back to the LLM. 
+* **Secret Guard & Circuit Breakers:** It physically intercepts the TCP stream to redact `sk-` keys before they hit the cloud, and enforces a hard 100k token limit per session to prevent infinite-loop billing drains.
+* **Kernel Tuning:** It dynamically monitors AI payloads and executes `sysctls` (TCP Fast Open) and `renice` commands to throttle background Chrome tabs when your agent compiles.
+* **Zero-Touch RAG:** Built a local TF-IDF sparse vector database from scratch. It auto-indexes your repo and uses Cosine Similarity to inject code into prompts with 0ms latency.
+
+Would love your feedback on the architecture! 
+Repo: https://github.com/CharleGutierrez/lomi
+
+---
+
+## 2. X (Twitter) - [Thread]
+
+**Tweet 1:**
+I just open-sourced LOMI 🦀
+A pure-Rust "God-Tier" Local AI Infrastructure Middleware. 
+
+It sits between your code editor (Cursor/Pi) and OpenAI. It redacts your API keys, stops infinite agent loops, and auto-tunes your Linux kernel.
+
+GitHub link below 🧵👇
+[Attach an image of the Ratatui Terminal UI]
+
+**Tweet 2:**
+Stop paying $50/mo for Cloud Sandboxes.
+LOMI features "The Vault": When an AI tries to run a bash command, LOMI intercepts the prompt, spawns an isolated Linux Namespace (`unshare --net --pid`), executes the code totally offline, and pipes the output back to the LLM.
+
+**Tweet 3:**
+Infinite Agent loops burning your API credits? 
+LOMI acts as a financial firewall. It actively tracks your session tokens. If an agent goes rogue and hits 100k tokens, LOMI physically blocks the TCP forward and mocks a 429 error. Your wallet is safe.
+
+**Tweet 4:**
+It also features Zero-Touch RAG. LOMI has a custom pure-Rust TF-IDF database engine. It auto-scans your local filesystem and injects the perfect file into your AI's prompt at 0ms latency—without relying on heavy Docker containers like Qdrant or Pinecone.
+
+**Tweet 5:**
+Check out the source code here, and drop a ⭐️ if you hate slow cloud dependencies!
+https://github.com/CharleGutierrez/lomi
+
+---
+
+## 3. LinkedIn
+
+**Post:**
+I am thrilled to announce the open-source release of **LOMI**, an Enterprise-Grade Local AI Gateway written entirely in Rust! 🦀🚀
+
+As developers, we are increasingly relying on autonomous AI agents (like Cursor and AutoGPT). However, sending local code to the cloud introduces massive security risks, API cost overruns, and latency.
+
+I built LOMI to solve this at the Operating System level:
+🔒 **Enterprise Secret Guard:** Actively scrubs prompts to redact accidentally exposed AWS or OpenAI keys before transmission.
+🛑 **Token Circuit Breakers:** A financial firewall that mathematically blocks TCP forwards if an agent enters an infinite loop.
+🛡️ **OS-Level Sandboxing:** Uses Linux Namespaces (`unshare`) to securely execute untrusted AI bash commands entirely offline.
+⚡ **Offline Auto-Failover:** If OpenAI drops your connection, LOMI catches the 500 error and silently reroutes your prompt to a local Ollama model without crashing your session.
+
+If you are building AI applications or using AI coding assistants, LOMI acts as your ultimate local safeguard.
+
+I would love to hear thoughts from the Engineering and AI communities! Check out the GitHub repository here: https://github.com/CharleGutierrez/lomi
+
+#RustLang #ArtificialIntelligence #SoftwareEngineering #OpenSource #OpenAI #LOMI
+
+---
+
+## 4. Reddit (r/rust)
+**Title:** I built LOMI: A pure-Rust Universal AI Gateway that leverages Linux Namespaces and Kernel tuning to safeguard LLM Agents.
+
 **Body:**
-Hey guys, I just open-sourced LOMI. It’s an AGI Operating System that acts as a proxy for your AI workflows. 
-My favorite feature: `lomi swarm`. You run it on your desktop and an old laptop, and it aggregates the RAM over TCP so you can split local Llama-3 70B across both machines. 
-If you use cloud APIs, it also intercepts heavy context prompts and routes them dynamically based on cost/intelligence (e.g. Gemini 1.5 Pro for 2M context, Groq for sub-second formatting). 
-Check it out and let me know what you think: https://github.com/CharleGutierrez/lomi
+Hey r/rust!
 
-### 3. Twitter / X
-I just open-sourced LOMI 🧠
-It's a high-performance AI Gateway written in Rust. You plug it into Cursor or AutoGPT, and it acts as an OS-level firewall and router.
-📉 Compresses context windows by 40%
-🌊 Routes easy tasks to Groq to save $
-🛡️ Sandboxes AI bash commands
-Code is up: https://github.com/CharleGutierrez/lomi
+I wanted to share a project I've been working on: **LOMI** (Local Optimization & Model Improver). It's a zero-dependency (well, relying on sysinfo, winreg, and reqwest) universal API proxy for tools like Cursor and AutoGPT.
+
+I got tired of the bloated Python SaaS solutions (like LiteLLM or E2B) so I built a native alternative. 
+
+Coolest Rust-specific features I implemented:
+* Built a custom **Multi-Layer Perceptron (MLP)** from scratch to handle true local fine-tuning mathematical passes.
+* **The Vault:** Uses `std::process::Command` to invoke `unshare --net --pid` to create instant, secure Linux containers for executing AI code natively. 
+* **TF-IDF Vector DB:** Wrote a highly compressed sparse indexer utilizing `HashMap<u64, String>` caching that searches and injects RAG context at literally 0ms latency.
+* **Omni-Orchestrator:** Interacts directly with `/proc/sys/net/ipv4` and the Windows Registry (via `winreg`) to execute hardware-level tuning to prioritize AI compilations over background processes.
+
+It was an incredible learning experience in low-level OS boundaries and TCP socket programming. Check it out and let me know if you see any places to optimize the codebase!
+https://github.com/CharleGutierrez/lomi
