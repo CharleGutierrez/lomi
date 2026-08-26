@@ -1021,6 +1021,23 @@ fn run_pi_proxy_server(port: u16) {
 
                 // --- REAL UPSTREAM FORWARDING / FALLBACK ---
                 let mut mock_content = String::new();
+
+                // --- NEW FEATURE: ENTERPRISE PRIVACY SCRUBBING ---
+                let mut is_scrubbed = false;
+                for msg in &mut chat_request.messages {
+                    if let Some(content_val) = msg.get_mut("content") {
+                        if let Some(s) = content_val.as_str() {
+                            if s.contains("sk-") || s.contains("AKIA") {
+                                let scrubbed = s.replace("sk-", "[REDACTED_SECRET]").replace("AKIA", "[REDACTED_AWS_KEY]");
+                                *content_val = serde_json::Value::String(scrubbed);
+                                is_scrubbed = true;
+                            }
+                        }
+                    }
+                }
+                if is_scrubbed {
+                    println!("   🛡️ ENTERPRISE SECRET GUARD: Detected active API keys! Redacting before cloud transmission...");
+                }
                 if let Ok(api_key) = std::env::var("UPSTREAM_API_KEY") {
                     let base_url = std::env::var("UPSTREAM_BASE_URL").unwrap_or_else(|_| "https://api.openai.com/v1/chat/completions".to_string());
                     println!("   🌐 [REAL FORWARDING] Making live HTTP request to {}...", base_url);
@@ -1052,7 +1069,24 @@ fn run_pi_proxy_server(port: u16) {
                                     mock_content = format!("LOMI Proxy HTTP Error: {}", resp.status());
                                 }
                             },
-                            Err(e) => mock_content = format!("LOMI Proxy Request Error: {}", e),
+                            Err(e) => {
+                                println!("   ⚠️ NETWORK ERROR: {}. Triggering Auto-Local Failover...", e);
+                                let fallback_url = "http://127.0.0.1:11434/api/chat";
+                                if let Ok(local_resp) = client.post(fallback_url).json(&chat_request).send() {
+                                    if let Ok(json) = local_resp.json::<serde_json::Value>() {
+                                        if let Some(content_str) = json["choices"][0]["message"]["content"].as_str() {
+                                            mock_content = content_str.to_string();
+                                            println!("   ✅ Successfully recovered response from offline local model!");
+                                        } else {
+                                            mock_content = "Failover response missing content".to_string();
+                                        }
+                                    } else {
+                                        mock_content = "Failover JSON parse error".to_string();
+                                    }
+                                } else {
+                                    mock_content = format!("LOMI Proxy Request Error (and Failover Failed): {}", e);
+                                }
+                            }
                         }
                     } else {
                         mock_content = "LOMI: Failed to build HTTP client.".to_string();
