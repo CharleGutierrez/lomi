@@ -3220,6 +3220,7 @@ dependencies = [
  "io-uring",
  "rand 0.8.8",
  "ratatui",
+ "rayon",
  "reqwest",
  "serde",
  "serde_json",

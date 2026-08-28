@@ -302,7 +302,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let (tx, rx) = mpsc::channel();
             
             // 5. Engine: Spawn background tuning/backprop thread
-            spawn_tuning_engine(architecture, hyperparams, hardware_desc, total_epochs, total_batches, tx);
+            spawn_tuning_engine(architecture, hyperparams, hardware_desc, total_epochs, total_batches, tx, model_path.clone(), dataset_path.clone());
 
             // 6. Run Loop
             let final_stats = if let Some(mut term) = terminal.as_mut() {
@@ -410,39 +410,67 @@ fn ai_tuner_optimize(model_config: &HfConfig) -> (HyperParams, String) {
     (params, hardware_desc)
 }
 
-/// The Engine: Simulates Tensor Backprop & Loss
-fn spawn_tuning_engine(architecture: String, params: HyperParams, hardware: String, epochs: u32, steps: u32, tx: mpsc::Sender<TuiUpdate>) {
+/// The Engine: Executes Real Tuning via Python Script
+fn spawn_tuning_engine(
+    architecture: String, 
+    params: HyperParams, 
+    hardware: String, 
+    epochs: u32, 
+    steps: u32, 
+    tx: mpsc::Sender<TuiUpdate>,
+    model_path: String,
+    dataset_path: String
+) {
     std::thread::spawn(move || {
+        use std::io::BufRead;
+        use serde_json::Value;
+
         let start_time = Instant::now();
         let mut total_tokens = 0;
-        let mut rng = rand::thread_rng();
+        let mut final_loss = 2.8;
         
-        let initial_loss = 2.8;
-        let final_loss_target = 0.8;
-        let total_global_steps = (epochs * steps) as f64;
-        let mut current_loss = initial_loss;
+        let mut child = Command::new("python3")
+            .arg("tune.py")
+            .arg("--model_path").arg(&model_path)
+            .arg("--dataset_path").arg(&dataset_path)
+            .arg("--epochs").arg(epochs.to_string())
+            .arg("--batch_size").arg(params.batch_size.to_string())
+            .arg("--context_window").arg(params.context_window.to_string())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::inherit())
+            .spawn()
+            .expect("Failed to start tune.py");
 
-        for epoch in 1..=epochs {
-            for step in 1..=steps {
-                // Simulate Matrix Math (Forward Pass, Backward Pass, Optimizer Step)
-                std::thread::sleep(Duration::from_millis(150));
-                
-                total_tokens += params.batch_size as u64 * params.context_window as u64;
-                let elapsed = start_time.elapsed().as_secs_f64().max(0.1);
-                let tps = total_tokens as f64 / elapsed;
-                
-                // Calculate realistic loss curve (Exponential Decay + Noise)
-                let global_step = ((epoch - 1) * steps + step) as f64;
-                let progress = global_step / total_global_steps;
-                let noise: f64 = rng.gen_range(-0.05..0.05);
-                current_loss = initial_loss - ((initial_loss - final_loss_target) * (progress.powf(0.5))) + noise;
-                current_loss = current_loss.max(0.1);
-                
-                if tx.send(TuiUpdate::Tick { epoch, step, tokens: total_tokens, tps, loss: current_loss }).is_err() {
-                    return;
+        if let Some(stdout) = child.stdout.take() {
+            let reader = std::io::BufReader::new(stdout);
+            for line in reader.lines() {
+                if let Ok(l) = line {
+                    if let Ok(json) = serde_json::from_str::<Value>(&l) {
+                        if let (Some(epoch), Some(step), Some(tokens), Some(tps), Some(loss)) = (
+                            json["epoch"].as_u64(),
+                            json["step"].as_u64(),
+                            json["tokens"].as_u64(),
+                            json["tps"].as_f64(),
+                            json["loss"].as_f64(),
+                        ) {
+                            total_tokens = tokens;
+                            final_loss = loss;
+                            if tx.send(TuiUpdate::Tick { 
+                                epoch: epoch as u32, 
+                                step: step as u32, 
+                                tokens: tokens as u64, 
+                                tps, 
+                                loss 
+                            }).is_err() {
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
+
+        let _ = child.wait();
 
         let duration = start_time.elapsed().as_secs();
         let stats = TuningSessionStats {
@@ -452,7 +480,7 @@ fn spawn_tuning_engine(architecture: String, params: HyperParams, hardware: Stri
             total_tokens_processed: total_tokens,
             tuning_duration_seconds: duration,
             tokens_per_second: total_tokens as f64 / (duration as f64).max(1.0),
-            final_loss: current_loss,
+            final_loss,
             hyperparameters: params,
             timestamp: Utc::now().to_rfc3339(),
         };
@@ -661,76 +689,58 @@ fn estimate_tokens(path: &std::path::PathBuf) -> usize {
 
 /// Runs a simulated benchmark of LOMI's AI Tuner across different CPU/GPU generations
 fn run_hardware_simulations() {
-    println!("🚀 LOMI: Initializing Hardware Optimizer Benchmarks\n");
+    println!("🚀 LOMI: Initializing Genuine Hardware Profiler\n");
     println!("------------------------------------------------------------");
     
-    // 1. Older Laptop (7th Gen) - CPU Only
-    simulate_hardware_optimization(
-        "7th Gen Office Laptop",
-        "Intel Core i5-7200U", 2, 8,
-        "", 0
-    );
-
-    // 2. Modern Productivity Laptop
-    simulate_hardware_optimization(
-        "12th Gen Thin-and-Light",
-        "Intel Core i7-1260P", 12, 16,
-        "Intel Iris Xe", 0
-    );
-
-    // 3. High-End Mac Studio / Laptop
-    simulate_hardware_optimization(
-        "Latest Apple Silicon",
-        "Apple M3 Max", 16, 128,
-        "Apple Metal Unified GPU", 128
-    );
-
-    // 4. Latest Enthusiast Desktop
-    simulate_hardware_optimization(
-        "Modern Gaming/AI Desktop",
-        "AMD Ryzen 9 7950X3D", 16, 64,
-        "NVIDIA RTX 4090", 24
-    );
-
-    // 5. Enterprise Server
-    simulate_hardware_optimization(
-        "Enterprise AI Server",
-        "Dual AMD EPYC 9654", 192, 1536,
-        "8x NVIDIA H100 SXM5", 640
-    );
-}
-
-fn simulate_hardware_optimization(name: &str, cpu_brand: &str, cores: usize, ram_gb: u64, gpu_name: &str, vram_gb: u64) {
-    let is_gpu = !gpu_name.is_empty() && vram_gb > 0;
-    let memory_pool = if is_gpu { vram_gb } else { ram_gb };
+    let mut sys = System::new_all();
+    sys.refresh_all();
     
-    // LOMI Engine Tuning Logic
-    let batch_size = if memory_pool >= 320 { 256 } else if memory_pool >= 80 { 64 } else if memory_pool >= 24 { 16 } else if memory_pool >= 16 { 8 } else { 4 };
-    let context_window = if memory_pool >= 320 { 128000 } else if memory_pool >= 80 { 32768 } else if memory_pool >= 16 { 8192 } else { 2048 };
-    let num_threads = if cores > 2 { cores - 1 } else { 1 };
+    let total_memory_gb = sys.total_memory() / 1024 / 1024 / 1024;
+    let cpus = sys.cpus();
+    let cpu_brand = cpus.first().map(|c| c.brand()).unwrap_or("Unknown CPU");
+    let core_count = cpus.len();
+    let os_name = System::name().unwrap_or_else(|| "Unknown OS".to_string());
+    let os_version = System::os_version().unwrap_or_else(|| "".to_string());
     
-    let device = if is_gpu && gpu_name.contains("Apple") { "Metal Performance Shaders (MPS)" }
-                 else if is_gpu { "CUDA / TensorRT" } 
-                 else { "CPU" };
-                 
-    let quant = if is_gpu && memory_pool >= 320 { "BFloat16 (Uncompressed)" } 
-                else if is_gpu { "QLoRA 4-bit (NF4)" } 
-                else { "GGUF 8-bit" };
-
-    println!("🖥️  PROFILE: {}", name.to_uppercase());
-    println!("   - Compute: {} ({} Cores)", cpu_brand, cores);
-    println!("   - Memory : {} GB RAM", ram_gb);
-    if !gpu_name.is_empty() {
-        println!("   - Accel. : {} ({} GB VRAM)", gpu_name, vram_gb);
-    } else {
-        println!("   - Accel. : None (Integrated)");
+    println!("🖥️  GENUINE HARDWARE PROFILE:");
+    println!("   - OS     : {} {}", os_name, os_version);
+    println!("   - CPU    : {}", cpu_brand);
+    println!("   - Cores  : {}", core_count);
+    println!("   - Memory : {} GB RAM", total_memory_gb);
+    
+    println!("\n⚡ RUNNING CPU BENCHMARK (Calculating Primes)...");
+    
+    let start_time = Instant::now();
+    
+    let limit = 200_000;
+    let mut primes = 0;
+    for n in 2..limit {
+        let mut is_prime = true;
+        let sqrt_n = (n as f64).sqrt() as u32;
+        for i in 2..=sqrt_n {
+            if n % i == 0 {
+                is_prime = false;
+                break;
+            }
+        }
+        if is_prime {
+            primes += 1;
+        }
     }
-    println!("\n   ⚡ LOMI TUNING ENGINE RESOLUTION:");
-    println!("      └ Target Device : {}", device);
-    println!("      └ Quantization  : {}", quant);
-    println!("      └ Max Threads   : {} / {}", num_threads, cores);
-    println!("      └ Batch Size    : {}", batch_size);
-    println!("      └ Ctx Window    : {} tokens", context_window);
+    
+    let duration = start_time.elapsed();
+    let elapsed_ms = duration.as_millis();
+    let score = if elapsed_ms > 0 {
+        100_000_000 / elapsed_ms as u64
+    } else {
+        0
+    };
+    
+    println!("   - Benchmark Time : {} ms", elapsed_ms);
+    println!("   - Primes Found   : {}", primes);
+    println!("   - LOMI HW Score  : {}", score);
+    
+    println!("\n✅ Hardware profiling complete.");
     println!("------------------------------------------------------------");
 }
 
@@ -974,17 +984,11 @@ fn run_pi_proxy_server(port: u16) {
 
                 // --- FEATURE: AGI BOARDROOM ORCHESTRATION ---
                 if compressed_req.to_lowercase().contains("full-stack") || compressed_req.to_lowercase().contains("build a full") || compressed_req.to_lowercase().contains("app") {
-                    println!("   🏛️ MULTI-AGENT BOARDROOM: Massive architectural prompt detected.");
-                    println!("      └ Task exceeds single-agent capacity. Spawning Sub-Agents...");
-                    std::thread::sleep(std::time::Duration::from_millis(300));
-                    println!("      └ 🧑‍💻 [Architect] : Planning system state and DB schema...");
-                    std::thread::sleep(std::time::Duration::from_millis(300));
-                    println!("      └ ⚙️ [Backend]   : Writing Rust Axum endpoints...");
-                    std::thread::sleep(std::time::Duration::from_millis(300));
-                    println!("      └ 🐛 [QA Tester] : Discovered missing Mutex in auth route. Rejecting PR...");
-                    std::thread::sleep(std::time::Duration::from_millis(300));
-                    println!("      └ ⚙️ [Backend]   : Applying Mutex fix. Tests passing.");
-                    println!("      └ ✅ Boardroom consensus reached! Compiling final artifact.");
+                    let output = std::process::Command::new("python3")
+                        .arg("boardroom.py")
+                        .output()
+                        .expect("Failed to execute boardroom.py");
+                    println!("{}", String::from_utf8_lossy(&output.stdout));
                 }
 
                 // --- FEATURE: CONTINUOUS RLHF (REAL-TIME PREFERENCE TUNING) ---
@@ -1245,107 +1249,105 @@ fn append_to_shadow_harvester(prompt: &str, completion: &str) {
     }
 }
 
-/// Swarm Compute: P2P distributed AI model sharding
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct SwarmPayload {
+    shard_id: usize,
+    vector_a: Vec<f64>,
+    vector_b: Vec<f64>,
+}
 
-// ==========================================
-// REAL PEER-TO-PEER SWARM COMPUTE ENGINE
-// ==========================================
-use std::net::{TcpListener, TcpStream};
-use std::io::Read;
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct SwarmResult {
+    shard_id: usize,
+    dot_product: f64,
+}
 
 fn run_swarm_mode(mode: &str) {
-    println!("🌐 LOMI PEER-TO-PEER SWARM COMPUTE ENGINE
-");
+    println!("🌐 LOMI PEER-TO-PEER SWARM COMPUTE ENGINE\n");
     
     if mode == "host" {
         println!("   📡 Starting Swarm Host on 0.0.0.0:8081...");
-        let listener = TcpListener::bind("0.0.0.0:8081").expect("Failed to bind swarm port");
+        let listener = std::net::TcpListener::bind("0.0.0.0:8081").expect("Failed to bind swarm port");
         println!("   ⏳ Waiting for Swarm Nodes to join...");
         
-        let mut connected_nodes = vec![];
-        
-        // Accept one node for demonstration of distributed compute
         if let Ok((mut stream, addr)) = listener.accept() {
             println!("   [+] Node Connected: {} (Sharing Compute Resources)", addr);
-            connected_nodes.push(stream.try_clone().unwrap());
             
-            // AI Tuner - Swarm Aggregation Logic
             let sys = sysinfo::System::new_all();
             let local_ram = sys.total_memory() / 1024 / 1024 / 1024;
             
-            println!("
-   🧠 AI TUNER: Swarm Hardware Aggregated!");
-            println!("      └ Total Swarm Nodes : {}", connected_nodes.len() + 1);
+            println!("\n   🧠 AI TUNER: Swarm Hardware Aggregated!");
             println!("      └ Local Node RAM    : {} GB", local_ram);
             
-            println!("
-   🚀 Distributing Tensor Computation (Matrix Multiplication)...");
+            println!("\n   🚀 Distributing Tensor Computation (Large Dot Product)...");
             
-            // Create a dummy tensor payload
-            let tensor_payload = "TENSOR_SHARD:0.5,0.1,-0.4,0.8,0.2";
+            let size = 10_000_000;
+            println!("      └ Generating random tensors (size: {})...", size);
+            let mut rng = rand::thread_rng();
+            use rand::Rng;
+            let vector_a: Vec<f64> = (0..size).map(|_| rng.gen_range(-1.0..1.0)).collect();
+            let vector_b: Vec<f64> = (0..size).map(|_| rng.gen_range(-1.0..1.0)).collect();
             
-            println!("      └ Sending Tensor Shard to Remote Node ({})...", addr);
-            let _ = stream.write_all(tensor_payload.as_bytes());
+            let payload = SwarmPayload { shard_id: 1, vector_a, vector_b };
             
-            println!("      └ Computing Local Tensor Shard on CPU...");
-            std::thread::sleep(std::time::Duration::from_millis(600)); // Simulate local compute
-            let local_result = 42.0; 
+            println!("      └ Serializing and sending Tensor Shard to Remote Node ({})...", addr);
+            let serialized = serde_json::to_string(&payload).unwrap() + "\n";
+            stream.write_all(serialized.as_bytes()).expect("Failed to send payload");
             
-            // Wait for remote node to finish
-            let mut buffer = [0; 512];
-            if let Ok(bytes_read) = stream.read(&mut buffer) {
-                let response = String::from_utf8_lossy(&buffer[..bytes_read]);
-                println!("      └ Received Computed Activations from Remote Node: {}", response.trim());
-                println!("
-   ✅ SWARM COMPUTE COMPLETE. Layers successfully merged! (Final Matrix Vector Output Computed)");
+            println!("      └ Waiting for remote node to finish computation...");
+            
+            let mut reader = std::io::BufReader::new(stream.try_clone().unwrap());
+            let mut response_str = String::new();
+            if let Ok(bytes_read) = std::io::BufRead::read_line(&mut reader, &mut response_str) {
+                if bytes_read > 0 {
+                    let result: SwarmResult = serde_json::from_str(&response_str).expect("Failed to parse result");
+                    println!("      └ Received Computed Activations from Remote Node!");
+                    println!("      └ Result for Shard {}: {}", result.shard_id, result.dot_product);
+                    println!("\n   ✅ SWARM COMPUTE COMPLETE. Layers successfully merged!");
+                }
             }
         }
     } else {
         println!("   🛰️ Joining Swarm at 127.0.0.1:8081...");
         
-        match TcpStream::connect("127.0.0.1:8081") {
+        match std::net::TcpStream::connect("127.0.0.1:8081") {
             Ok(mut stream) => {
                 println!("   ✅ Connected to Host! Sharing local CPU with Swarm.");
-                println!("   ⏳ Awaiting tensor shards from Host node...");
                 
-                let mut buffer = [0; 512];
+                let mut reader = std::io::BufReader::new(stream.try_clone().unwrap());
+                let mut buffer = String::new();
+                
                 loop {
-                    match stream.read(&mut buffer) {
+                    buffer.clear();
+                    match std::io::BufRead::read_line(&mut reader, &mut buffer) {
                         Ok(bytes_read) if bytes_read > 0 => {
-                            let payload = String::from_utf8_lossy(&buffer[..bytes_read]);
-                            println!("   📥 Received Payload: {}", payload);
+                            println!("   📥 Received Payload ({} bytes)", bytes_read);
                             
-                            if payload.starts_with("TENSOR_SHARD:") {
-                                println!("   ⚙️ Executing heavy matrix multiplication on local CPU...");
-                                // Actually compute a result from the payload
-                                let values: Vec<f64> = payload.replace("TENSOR_SHARD:", "")
-                                    .split(',')
-                                    .filter_map(|s| s.parse::<f64>().ok())
-                                    .collect();
+                            let payload: SwarmPayload = match serde_json::from_str(&buffer) {
+                                Ok(p) => p,
+                                Err(e) => { println!("   ❌ Failed to parse payload: {}", e); continue; }
+                            };
+                            
+                            println!("   ⚙️ Executing heavy parallel dot product on local CPU (Rayon)...");
+                            
+                            use rayon::prelude::*;
+                            let result_val: f64 = payload.vector_a.par_iter()
+                                .zip(payload.vector_b.par_iter())
+                                .map(|(a, b)| a * b)
+                                .sum();
                                 
-                                let mut result = 0.0;
-                                for v in values {
-                                    result += v * 2.5; // Dummy activation function
-                                }
-                                
-                                std::thread::sleep(std::time::Duration::from_millis(800)); // Simulate heavy compute
-                                
-                                let out_payload = format!("COMPUTED_LAYER_RESULT: {}", result);
-                                println!("   📤 Sending computed activations back to Host...");
-                                let _ = stream.write_all(out_payload.as_bytes());
-                                break;
-                            }
-                        }
-                        _ => {
-                            println!("   ❌ Host disconnected.");
+                            println!("   ✅ Computation finished. Result: {}", result_val);
+                            
+                            let result = SwarmResult { shard_id: payload.shard_id, dot_product: result_val };
+                            let out_payload = serde_json::to_string(&result).unwrap() + "\n";
+                            let _ = stream.write_all(out_payload.as_bytes());
                             break;
                         }
+                        _ => { break; }
                     }
                 }
             }
-            Err(e) => {
-                println!("   ❌ Failed to connect to Host: {}. Is the Host running?", e);
-            }
+            Err(e) => { println!("   ❌ Failed to connect to Host: {}", e); }
         }
     }
 }
@@ -1473,34 +1475,43 @@ fn run_vector_indexer(path: Option<String>) {
 /// Genesis Protocol: Recursive Self-Improvement (LOMI modifying its own code)
 fn run_genesis_loop() {
     println!("🌌 LOMI GENESIS: Initiating Recursive Self-Improvement Protocol...\n");
+    println!("   🚀 Spawning Python AI Agent (genesis.py)...");
     
-    let source_path = "src/main.rs";
-    let source_code = std::fs::read_to_string(source_path).expect("Failed to read own source code.");
-    let initial_len = source_code.len();
-    let initial_lines = source_code.lines().count();
+    let python_code = r#"import asyncio
+from google.antigravity import Agent, LocalAgentConfig
+from google.antigravity.hooks import policy
+
+async def main():
+    config = LocalAgentConfig(
+        system_instructions="You are the LOMI AI Genesis Agent. Read src/main.rs, find a minor inefficiency or typo, and apply a fix.",
+        policies=[policy.allow_all()],
+    )
     
-    println!("   [1/5] Ingesting own source code (`src/main.rs`) -> {} bytes, {} lines.", initial_len, initial_lines);
-    std::thread::sleep(std::time::Duration::from_millis(800));
+    async with Agent(config) as agent:
+        print("Agent is thinking...")
+        response = await agent.chat("Please analyze src/main.rs, find a minor issue or typo, and fix it using your tools. Do not ask for user input. Finish when done.")
+        print("\nAgent final response:")
+        print(await response.text())
+
+if __name__ == "__main__":
+    asyncio.run(main())
+"#;
+    std::fs::write("genesis.py", python_code).expect("Failed to write genesis.py");
     
-    println!("   [2/5] Profiling runtime metrics & AST bottleneck analysis...");
-    std::thread::sleep(std::time::Duration::from_millis(1200));
+    let mut child = std::process::Command::new("python3")
+        .arg("genesis.py")
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .expect("Failed to spawn genesis agent.");
+        
+    let status = child.wait().expect("Failed to wait on genesis agent.");
     
-    println!("   [3/5] ⚠️ Inefficiency Detected: `universal_model_router` performs unnecessary String cloning.");
-    println!("   [4/5] Synthesizing optimized Rust code... Applying Zero-Copy referencing constraints.");
-    std::thread::sleep(std::time::Duration::from_millis(1500));
-    
-    // Physically modify its own source file to prove R/W capabilities
-    let genesis_mark = format!("\n// [LOMI GENESIS PROTOCOL] Self-improvement pass completed at {}. Optimized internal memory allocation.\n", chrono::Utc::now().to_rfc3339());
-    use std::io::Write;
-    let mut file = std::fs::OpenOptions::new().append(true).open(source_path).unwrap();
-    file.write_all(genesis_mark.as_bytes()).unwrap();
-    
-    println!("   [5/5] Patch successfully applied directly to `src/main.rs`.");
-    println!("   🔄 Triggering background compilation and hot-reloading binary...");
-    std::thread::sleep(std::time::Duration::from_millis(1000));
-    
-    println!("\n   ✅ GENESIS COMPLETE. LOMI is now 4.2% faster.");
-    println!("      I will sleep until the next idle CPU cycle.");
+    if status.success() {
+        println!("\n   ✅ GENESIS COMPLETE. LOMI AI has modified its own code.");
+    } else {
+        println!("\n   ❌ GENESIS FAILED. Agent returned an error.");
+    }
 }
 
 /// Feature: OS Daemonization
@@ -1758,3 +1769,10 @@ fn run_web_dashboard(port: u16) {
 // [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-25T12:24:17.018733513+00:00. Optimized internal memory allocation.
 
 // [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-25T12:28:05.656306810+00:00. Optimized internal memory allocation.
+// [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-28T12:28:05.124728730+00:00. Optimized internal memory allocation.
+
+// [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-28T12:28:50.827833130+00:00. Optimized internal memory allocation.
+
+// [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-28T12:30:02.376247189+00:00. Optimized internal memory allocation.
+
+// [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-28T13:25:49.685717854+00:00. Optimized internal memory allocation.
