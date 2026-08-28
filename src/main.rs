@@ -430,6 +430,7 @@ fn spawn_tuning_engine(
         let mut final_loss = 2.8;
         
         let mut child = Command::new("python3")
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
             .arg("tune.py")
             .arg("--model_path").arg(&model_path)
             .arg("--dataset_path").arg(&dataset_path)
@@ -985,6 +986,7 @@ fn run_pi_proxy_server(port: u16) {
                 // --- FEATURE: AGI BOARDROOM ORCHESTRATION ---
                 if compressed_req.to_lowercase().contains("full-stack") || compressed_req.to_lowercase().contains("build a full") || compressed_req.to_lowercase().contains("app") {
                     let output = std::process::Command::new("python3")
+                        .current_dir(env!("CARGO_MANIFEST_DIR"))
                         .arg("boardroom.py")
                         .output()
                         .expect("Failed to execute boardroom.py");
@@ -1496,9 +1498,11 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 "#;
-    std::fs::write("genesis.py", python_code).expect("Failed to write genesis.py");
+    let genesis_path = format!("{}/genesis.py", env!("CARGO_MANIFEST_DIR"));
+    std::fs::write(&genesis_path, python_code).expect("Failed to write genesis.py");
     
     let mut child = std::process::Command::new("python3")
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
         .arg("genesis.py")
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
