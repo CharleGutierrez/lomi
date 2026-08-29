@@ -371,7 +371,7 @@ fn ai_tuner_optimize(model_config: &HfConfig) -> (HyperParams, String) {
     
     if let Ok(output) = Command::new("nvidia-smi").arg("--query-gpu=name,memory.total").arg("--format=csv,noheader").output() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        if stdout.trim().len() > 0 {
+        if !stdout.trim().is_empty() {
             gpu_desc = stdout.trim().to_string();
             // Extremely rough VRAM parse, default to 16GB if parse fails
             vram_gb = 16; 
@@ -1134,6 +1134,9 @@ fn run_pi_proxy_server(port: u16) {
                 // Save to cache
                 semantic_cache.insert(req_hash, response);
                 
+                // Harvest interaction for offline fine-tuning
+                append_to_shadow_harvester(&compressed_req, &mock_content);
+                
                 println!("   ✅ Output delivered back to client.\n");
             }
             Err(e) => {
@@ -1242,8 +1245,8 @@ fn append_to_shadow_harvester(prompt: &str, completion: &str) {
     let _ = std::fs::create_dir_all(".lomi_cache");
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(".lomi_cache/shadow_dataset.jsonl") {
         // Clean strings for JSON
-        let clean_p = prompt.replace("\"", "\\\"").replace("\n", " ");
-        let clean_c = completion.replace("\"", "\\\"").replace("\n", " ");
+        let clean_p = prompt.replace('"', "\\\"").replace('\n', " ");
+        let clean_c = completion.replace('"', "\\\"").replace('\n', " ");
         let entry = format!(r#"{{"instruction": "{}", "output": "{}"}}"#, clean_p, clean_c);
         let _ = writeln!(file, "{}", entry);
         println!("   🌱 SHADOW HARVESTER: Auto-saved interaction to local training dataset!");
