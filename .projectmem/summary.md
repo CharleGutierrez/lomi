@@ -14,7 +14,6 @@ LOMI: LLM Optimization & Model Improver
 - No decisions logged yet.
 
 ## Notes
-- docs: add comprehensive tutorial to README
 - feat: implement interactive Chart.js web dashboard for real-time monitoring
 - feat: implement real-time JSON metrics endpoint for Web Dashboard
 - feat: make Request Routing Distribution doughnut chart 100% accurate based on live API telemetry
@@ -24,6 +23,7 @@ LOMI: LLM Optimization & Model Improver
 - docs: Completely revise README to reflect 100% Real Deep-Tech implementation and Competitor advantages
 - docs: Update VIRAL_LAUNCH_KIT.md with explosive new marketing copy reflecting Real OS-level features
 - High churn detected: genesis.py (4 edits in 10 min) [genesis.py]
+- High churn detected: src/main.rs (4 edits in 10 min) [src/main.rs]
 
 ## Key files
 - `src/main.rs`

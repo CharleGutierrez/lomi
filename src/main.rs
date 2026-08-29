@@ -54,7 +54,6 @@ use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use sysinfo::System;
 use chrono::Utc;
-use rand::Rng;
 
 /// LOMI: Local Optimization & Model Improver (Pro Edition)
 #[derive(Parser)]
@@ -333,7 +332,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Parses the dataset, simulates tokenization, and returns number of batches
-fn process_dataset(path: &str, batch_size: usize, context_window: usize) -> u32 {
+fn process_dataset(path: &str, batch_size: usize, _context_window: usize) -> u32 {
     let mut num_lines = 0;
     if Path::new(path).exists() {
         if let Ok(file) = File::open(path) {
@@ -416,7 +415,7 @@ fn spawn_tuning_engine(
     params: HyperParams, 
     hardware: String, 
     epochs: u32, 
-    steps: u32, 
+    _steps: u32, 
     tx: mpsc::Sender<TuiUpdate>,
     model_path: String,
     dataset_path: String
@@ -532,7 +531,7 @@ fn run_tui_loop<B: ratatui::backend::Backend>(
     Ok(app.final_stats)
 }
 
-fn run_headless_loop(mut app: AppState, rx: mpsc::Receiver<TuiUpdate>) -> std::io::Result<Option<TuningSessionStats>> {
+fn run_headless_loop(app: AppState, rx: mpsc::Receiver<TuiUpdate>) -> std::io::Result<Option<TuningSessionStats>> {
     println!("⚙️ HW: {} | Mode: {}", app.hardware, app.params.device_type);
     loop {
         if let Ok(update) = rx.recv() {
@@ -1060,7 +1059,7 @@ fn run_pi_proxy_server(port: u16) {
                                         if let Some(content) = json["choices"][0]["message"]["content"].as_str() {
                                             mock_content = content.to_string();
                                             println!("   ✅ Successfully fetched true response from upstream model!");
-                                            let cache_body = format!(r#"{{"id": "chatcmpl-cached", "object": "chat.completion", "model": "{}", "choices": [{{"index": 0, "message": {{"role": "assistant", "content": "{}"}}, "finish_reason": "stop"}}], "usage": {{"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}}}"#, chat_request.model, mock_content.replace('"', "\"").replace('\n', "\\n"));
+                                            let cache_body = format!(r#"{{"id": "chatcmpl-cached", "object": "chat.completion", "model": "{}", "choices": [{{"index": 0, "message": {{"role": "assistant", "content": "{}"}}, "finish_reason": "stop"}}], "usage": {{"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}}}"#, chat_request.model, mock_content.replace('"', "\\\"").replace('\n', "\\n"));
                                             let cache_res = format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", cache_body.len(), cache_body);
                                             semantic_cache.insert(req_hash, cache_res);
                                             if let Ok(json_cache) = serde_json::to_string(&semantic_cache) {
@@ -1780,3 +1779,4 @@ fn run_web_dashboard(port: u16) {
 // [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-28T12:30:02.376247189+00:00. Optimized internal memory allocation.
 
 // [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-28T13:25:49.685717854+00:00. Optimized internal memory allocation.
+// [LOMI GENESIS PROTOCOL] Self-improvement pass completed at 2026-08-29T07:55:00.000000000+00:00. Fixed JSON quote escaping bug and pruned redundant imports and parameters.
