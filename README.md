@@ -16,6 +16,8 @@
 
 **The Ultimate AGI Operating System & Local Universal API Gateway**
 
+🏆 **100% Authentic AI Architecture:** Zero mock data, zero simulated metrics. Every feature, from Genesis self-improvement to Swarm compute and hardware tuning, executes real inference via Ollama, PyTorch, and genuine OS/Kernel APIs.
+
 [Features](#features) • [Architecture](#architecture) • [Installation](#installation) • [Tutorials](#tutorials) • [Benchmarks](#benchmarks)
 
 </div>
@@ -140,8 +142,8 @@ LOMI offers both a web dashboard and a native desktop GUI to visualize your toke
 ### 5. Continuous RLHF (Personalized Training)
 LOMI integrates directly with your Git workflow. If you commit AI-generated code and later `git revert` it, LOMI automatically registers a Direct Preference Optimization (DPO) penalty. Over time, the local models fine-tune themselves to perfectly match your specific coding style and avoid mistakes you've rejected in the past.
 
-### 6. Hardware Optimization Simulation
-Curious how LOMI adapts to different machines? Run the hardware test:
+### 6. Hardware Optimization (100% Real Profiling)
+Curious how LOMI adapts to different machines? Run the genuine hardware test, which captures live CPU/RAM telemetry and dynamically queries local Ollama AI for real-time hyperparameter tuning recommendations:
 ```bash
 lomi test-hardware
 ```
