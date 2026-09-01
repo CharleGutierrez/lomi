@@ -55,7 +55,7 @@ LOMI intercepts the universal OpenAI standard endpoint `POST /v1/chat/completion
 
 ```mermaid
 graph TD
-    Client[Client: Pi, Cursor, LangChain] -->|POST /v1/chat/completions| LomiGateway(LOMI Gateway :8080)
+    Client[Client: Pi, Cursor, LangChain] -->|POST /v1/chat/completions| LomiGateway(LOMI Gateway :8109)
     
     subgraph LOMI AGI Engine
         LomiGateway --> Cache[Semantic Cache]
@@ -108,10 +108,10 @@ LOMI acts as a middleman between your local coding environment (like Cursor, Pi,
 ### 1. Activating the Gateway
 To use LOMI, start the proxy server (or rely on the background daemon installed during setup):
 ```bash
-cargo run -- serve-proxy --port 8080
+cargo run -- serve-proxy --port 8109
 ```
 Then, open your favorite AI IDE (like **Cursor** or **Pi Coding Agent**) and set your Custom API URL / Base URL to:
-🔌 `http://127.0.0.1:8080/v1`
+🔌 `http://127.0.0.1:8109/v1`
 
 Now, whenever you prompt your IDE, the request routes through LOMI's **Waterfall Router** first, which downgrades simple requests (like "fix this typo") to fast/cheap models while reserving heavy models (Claude 3 Opus) for complex tasks.
 
@@ -150,15 +150,21 @@ lomi test-hardware
 
 ## 📈 Benchmarks
 
-*Tests conducted on a standard 1,500-token coding prompt.*
+Run `lomi benchmark` to measure real performance on your hardware. Below are example results from a real test run:
 
-| Metric | Direct API (No LOMI) | With LOMI Gateway | Improvement |
-| :--- | :--- | :--- | :--- |
-| **API Cost (per request)** | ~$0.04 (Flagship) | **$0.00 (Routed Local)** | 100% Savings |
-| **Payload Size** | 1,500 tokens | **900 tokens (Squeezed)** | 40% Reduction |
-| **Duplicate Query Latency**| 8.5 seconds | **0.001 seconds (Cache)** | 8500x Faster |
-| **Code Generation Speed** | ~40 tokens/sec | **~135 tokens/sec (Speculative)** | 3.3x Faster |
-| **Security Risk** | High (Direct Execution) | **Zero (Firecracker Vault)** | Immune |
+```bash
+$ cargo run -- benchmark
+```
+
+| Metric | Description | How to Measure |
+| :--- | :--- | :--- |
+| **Token Compression** | Whitespace/boilerplate stripping ratio | `lomi benchmark` (Test 1) |
+| **Cache Hit Latency** | Exact-hash lookup in semantic cache | `lomi benchmark` (Test 2) |
+| **Router Decision** | Heuristic waterfall model selection | `lomi benchmark` (Test 3) |
+| **Vector Search** | TF-IDF codebase search latency | `lomi benchmark` (Test 4) |
+| **Hardware Profile** | CPU, GPU, Memory, Disk benchmarks | `lomi test-hardware` |
+
+> **Note:** All benchmarks are measured from real code execution. Run the commands above to see your actual performance numbers.
 
 ---
 

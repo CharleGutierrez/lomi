@@ -1,14 +1,22 @@
 #include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
 #include <linux/if_ether.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
-#include <arpa/inet.h>
+
+#define bpf_htons(x) __builtin_bswap16(x)
+#define bpf_htonl(x) __builtin_bswap32(x)
+#ifndef IPPROTO_TCP
+#define IPPROTO_TCP 6
+#endif
+
+#ifndef SEC
+#define SEC(NAME) __attribute__((section(NAME), used))
+#endif
 
 /// Lomi AI Packet Interceptor (eBPF XDP)
-/// Drops malicious / malformed payloads before they hit the Linux TCP stack.
-SEC("xdp_lomi_router")
-int xdp_prog(struct xdp_md *ctx) {
+/// Inspects incoming packets on the Lomi AI Proxy port (8109).
+SEC("xdp")
+int xdp_lomi_router(struct xdp_md *ctx) {
     void *data_end = (void *)(long)ctx->data_end;
     void *data = (void *)(long)ctx->data;
 
@@ -35,18 +43,12 @@ int xdp_prog(struct xdp_md *ctx) {
     if ((void *)(tcp + 1) > data_end)
         return XDP_PASS;
 
-    // If destination port is 8080 (Lomi AI Proxy)
-    if (tcp->dest == bpf_htons(8080)) {
-        // eBPF Logic: We can inspect packet payloads here to block banned AI prompt injections
-        // or prioritize model download traffic. For now, we allow the traffic through safely.
-        
-        // Example: Drop traffic from a specific blocked IP (10.0.0.5 = 167772170 in int)
-        // if (ip->saddr == bpf_htonl(167772170)) {
-        //     return XDP_DROP;
-        // }
+    // If destination port is 8109 (Lomi AI Proxy default port)
+    if (tcp->dest == bpf_htons(8109)) {
+        return XDP_PASS;
     }
 
-    return XDP_PASS; // Pass the packet to the standard Linux network stack
+    return XDP_PASS;
 }
 
 char _license[] SEC("license") = "GPL";

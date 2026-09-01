@@ -3218,6 +3218,7 @@ dependencies = [
  "clap",
  "crossterm",
  "io-uring",
+ "libc",
  "rand 0.8.8",
  "ratatui",
  "rayon",

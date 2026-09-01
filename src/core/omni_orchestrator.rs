@@ -94,6 +94,11 @@ pub fn run_orchestrator() {
             }
         }
 
+        // Autonomous Agile AI Memory & VRAM Tuning Pass
+        let profile = crate::core::memory_tuner::MemoryTuner::execute_tuning_pass();
+        println!("🧠 [Agile AI Tuner] Mode: {:?} | Target Ctx: {} | Low VRAM: {} | KV: {}", 
+            profile.tier, profile.target_num_ctx, profile.low_vram, if profile.f16_kv { "f16" } else { "q8/quantized" });
+
         thread::sleep(Duration::from_secs(3));
     }
 }

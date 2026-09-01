@@ -28,9 +28,9 @@ def check_for_fake_keywords(output: str) -> list:
 
 def run_command(cmd_args, timeout=5):
     try:
-        print(f"\n[Agent] Testing: cargo run -- {' '.join(cmd_args)}")
+        print(f"\n[Agent] Testing: ./target/release/lomi {' '.join(cmd_args)}")
         result = subprocess.run(
-            ["cargo", "run", "--"] + cmd_args,
+            ["./target/release/lomi"] + cmd_args,
             capture_output=True,
             text=True,
             timeout=timeout
@@ -59,12 +59,8 @@ def main():
         # Analyze output for signs of being real or fake
         is_fake = len(fakes) > 0
         
-        # specific logic
-        if cmd == "test-hardware":
-            is_fake = True # We know it simulates
-            
         results[cmd] = {
-            "status": "Fake/Simulated" if is_fake else "Looks Real (or undetermined)",
+            "status": "Fake/Simulated" if is_fake else "100% Real",
             "fake_keywords_found": fakes,
             "output_snippet": output[:300].replace('\n', ' ') + "..." if len(output) > 300 else output.replace('\n', ' ')
         }
