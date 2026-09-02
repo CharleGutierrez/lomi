@@ -122,21 +122,22 @@
 ### 3. Linux Kernel & Hardware Telemetry Control Topology
 
 ```mermaid
-graph LR
-    subgraph Hardware Telemetry Layer
-        Sysfs[/sys/fs/cgroup/] --> TelemetryEngine[cgroups v2 Telemetry Engine]
-        Proc[/proc/meminfo] --> RAMEngine[RAM Telemetry Engine]
+flowchart LR
+    subgraph Hardware_Layer["Hardware Telemetry Layer"]
+        Sysfs["/sys/fs/cgroup/"] --> TelemetryEngine["cgroups v2 Telemetry Engine"]
+        Proc["/proc/meminfo"] --> RAMEngine["RAM Telemetry Engine"]
     end
 
-    subgraph LOMI Memory & Kernel Controller
-        TelemetryEngine --> MemoryTuner[Agile Memory Tuner]
+    subgraph Controller_Layer["LOMI Memory & Kernel Controller"]
+        TelemetryEngine --> MemoryTuner["Agile Memory Tuner"]
         RAMEngine --> MemoryTuner
-        MemoryTuner --> Profile{Agile Profile State}
-        Profile -->|Low Memory Pressure| HighCtx[High Context Window: 16384]
-        Profile -->|High Memory Pressure| LowCtx[Agile Context Window: 4096]
-        Profile -->|Cgroup Enforcement| CgroupLimit[Linux cgroup memory.high Enforcement]
+        MemoryTuner --> Profile{"Agile Profile State"}
+        Profile -->|"Low Memory Pressure"| HighCtx["High Context Window: 16384"]
+        Profile -->|"High Memory Pressure"| LowCtx["Agile Context Window: 4096"]
+        Profile -->|"Cgroup Enforcement"| CgroupLimit["Linux cgroup memory.high Enforcement"]
     end
 ```
+
 
 ---
 
