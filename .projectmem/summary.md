@@ -1,6 +1,6 @@
 # projectmem - lomi
 
-_Last updated: 2026-08-31_
+_Last updated: 2026-09-01_
 
 ## Project purpose
 LOMI: LLM Optimization & Model Improver
@@ -14,7 +14,6 @@ LOMI: LLM Optimization & Model Improver
 - Transform fake features into 100% real AI-driven features: implement real DPO fine-tuning for RLHF, real speculative decoding via Ollama draft models, real AI-powered Genesis self-improvement via Ollama/OpenAI APIs, and real Multi-Agent Boardroom debates via LLM API calls. [src/main.rs]
 
 ## Notes
-- feat: make Request Routing Distribution doughnut chart 100% accurate based on live API telemetry
 - style: generate and embed dynamic SVG logo for LOMI signifying gateway capabilities
 - style: embed SVG logo into the interactive Web Dashboard header
 - feat(security): Inject true Enterprise Privacy Scrubbing and Auto-Local Failover to Proxy Router
@@ -24,6 +23,7 @@ LOMI: LLM Optimization & Model Improver
 - High churn detected: src/main.rs (4 edits in 10 min) [src/main.rs]
 - High churn detected: genesis.py (4 edits in 10 min) [genesis.py]
 - Transformed all 4 fake features into 100% real AI-powered implementations: (1) RLHF/DPO now saves real preference rejection pairs to .lomi_cache/dpo_pairs.jsonl and spawns async Ollama analysis thread for lesson-learning, (2) Speculative Decoding now queries real Ollama draft model (qwen2.5-coder:1.5b) for token pre-generation with measured throughput, (3) Genesis now runs real Ollama-powered code analysis via genesis.py with heuristic fallback (cleaned 124 lines on first run), (4) Boardroom now runs 3 real AI agents (Optimizer/Auditor/Synthesizer) via Ollama API calls. Zero fictional SDKs remain. [src/main.rs]
+- New feature: feat: upgrade all simulated features to 100% authentic AI implementations [.projectmem/summary.md]
 
 ## Key files
 - `src/main.rs`

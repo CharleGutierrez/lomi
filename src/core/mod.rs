@@ -1,2 +1,13 @@
+pub mod cgroup_manager;
+pub mod context_rotator;
+pub mod daemon_installer;
 pub mod memory_tuner;
+pub mod model_benchmark;
+pub mod model_router;
 pub mod omni_orchestrator;
+pub mod predictive_cache;
+pub mod privacy_scrubber;
+pub mod prompt_guard;
+pub mod rate_limiter;
+pub mod token_squeezer;
+pub mod vector_rag;

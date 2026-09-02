@@ -222,3 +222,38 @@ impl VellaBridge {
         report.join("\n")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vella_telemetry_packet_creation() {
+        let packet = VellaTelemetryPacket::new(
+            "gpt-4",
+            "qwen2.5-coder:1.5b",
+            "Ollama",
+            1000,
+            400,
+            50,
+            120,
+            350,
+            0,
+        );
+
+        assert_eq!(packet.model_requested, "gpt-4");
+        assert_eq!(packet.model_routed, "qwen2.5-coder:1.5b");
+        assert_eq!(packet.original_tokens, 1000);
+        assert_eq!(packet.compressed_tokens, 400);
+        assert_eq!(packet.tokens_saved, 600);
+    }
+
+    #[test]
+    fn test_vella_ai_tuner_run() {
+        let bridge = VellaBridge::default();
+        let report = bridge.run_vella_ai_tuner();
+        assert!(report.contains("VELLA AI TUNER"));
+        assert!(report.contains("completed successfully"));
+    }
+}
+

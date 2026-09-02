@@ -3,7 +3,10 @@
 .projectmem/watch.log
 .projectmem/structure.json
 
-
 # Added by cargo
-
 /target
+
+# Cache & Runtime logs
+.lomi_cache/
+*.log
+lomi_*_stats.json

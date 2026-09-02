@@ -265,3 +265,66 @@ impl MemoryTuner {
         profile
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ram_telemetry_gathering() {
+        let ram = MemoryTuner::get_ram_telemetry();
+        assert!(ram.total_mb > 0);
+        assert!(ram.used_percent >= 0.0 && ram.used_percent <= 100.0);
+    }
+
+    #[test]
+    fn test_agile_profile_computation_high_memory() {
+        let ram = RamTelemetry {
+            total_mb: 8192,
+            available_mb: 1024,
+            used_mb: 7168,
+            used_percent: 87.5,
+            swap_total_mb: 2048,
+            swap_free_mb: 1024,
+        };
+        let gpu = GpuTelemetry {
+            detected: false,
+            vendor: "None".to_string(),
+            model: "CPU".to_string(),
+            total_vram_mb: 0,
+            free_vram_mb: 0,
+            used_vram_mb: 0,
+        };
+        let profile = MemoryTuner::compute_agile_profile(&ram, &gpu);
+        assert_eq!(profile.tier, TuningTier::UltraLite);
+        assert_eq!(profile.target_num_ctx, 1024);
+        assert!(profile.low_vram);
+        assert!(!profile.f16_kv);
+    }
+
+    #[test]
+    fn test_agile_profile_computation_low_memory_pressure() {
+        let ram = RamTelemetry {
+            total_mb: 32768,
+            available_mb: 24576,
+            used_mb: 8192,
+            used_percent: 25.0,
+            swap_total_mb: 8192,
+            swap_free_mb: 8192,
+        };
+        let gpu = GpuTelemetry {
+            detected: true,
+            vendor: "NVIDIA".to_string(),
+            model: "RTX 4090".to_string(),
+            total_vram_mb: 24576,
+            free_vram_mb: 20000,
+            used_vram_mb: 4576,
+        };
+        let profile = MemoryTuner::compute_agile_profile(&ram, &gpu);
+        assert_eq!(profile.tier, TuningTier::HighPerformance);
+        assert_eq!(profile.target_num_ctx, 4096);
+        assert!(!profile.low_vram);
+        assert!(profile.f16_kv);
+    }
+}
+
