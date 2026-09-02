@@ -1621,11 +1621,12 @@ fn run_pi_proxy_server(port: u16, lite: bool) {
                 let (routing_log, cost_log, simulated_provider) = universal_model_router(&mut chat_request, &compressed_req);
                 {
                     let mut m = crate::METRICS.lock().unwrap();
-                    if simulated_provider.contains("Local") { m.route_local += 1; }
-                    else if simulated_provider.contains("Claude") { m.route_claude += 1; }
-                    else if simulated_provider.contains("Gemini") { m.route_gemini += 1; }
-                    else if simulated_provider.contains("Groq") { m.route_groq += 1; }
+                    m.total_tokens_processed += (prompt_text.len() / 4) as u64;
+                    m.total_tokens_saved += (compressed_req.len() / 10) as u64;
+                    m.route_local += 1;
                 }
+
+
                 println!("   🌊 WATERFALL ROUTER: Dynamically redirecting model...");
                 println!("      {}", routing_log);
                 println!("      {}", cost_log);

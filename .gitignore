@@ -9,4 +9,5 @@
 # Cache & Runtime logs
 .lomi_cache/
 *.log
+*.log.done
 lomi_*_stats.json

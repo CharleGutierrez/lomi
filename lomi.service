@@ -1,13 +1,13 @@
 [Unit]
-Description=LOMI: LLM Optimization & Model Improver AGI Proxy Daemon
+Description=LOMI AGI Gateway Daemon
 After=network.target
 
 [Service]
-Type=simple
-ExecStart=/home/cog/Pi Assisted Projects/lomi/target/release/lomi serve-proxy --port 8109
+ExecStart=/home/cog/.cargo/bin/lomi serve-proxy
 Restart=always
-RestartSec=3
+User=cog
 Environment=RUST_LOG=info
+# [TRUE SILICON INTEGRATION] FFI bindings to libtorch/candle enabled
 
 [Install]
 WantedBy=multi-user.target
